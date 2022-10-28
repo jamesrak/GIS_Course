@@ -3,3 +3,8 @@
 .RData
 .Ruserdata
 *.Rproj
+*.DS_Store
+*/data/*
+renv/
+renv.lock
+.Rprofile

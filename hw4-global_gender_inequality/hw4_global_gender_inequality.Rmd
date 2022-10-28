@@ -1,0 +1,80 @@
+---
+title: "HW4:Global Gender Inequality Index"
+output: html_document
+---
+
+### Global Gender Inequality Index
+This notebook aims to visualize the difference in gender inequality between 2010 and 2019
+
+```{r}
+library(sf)
+library(terra)
+library(here)
+library(tidyverse)
+library(janitor)
+library(plotly)
+```
+
+
+### Prepare data
+```{r}
+
+df <- read_csv(here('hw4-global_gender_inequality','data','HDR21-22_Composite_indices_complete_time_series.csv'))
+head(df,10)
+```
+
+```{r}
+world_boundary <- st_read(here('hw4-global_gender_inequality','data','World_Countries_(Generalized).geojson'))
+world_boundary <- world_boundary %>%
+  clean_names()
+```
+
+
+select global gender inequality data
+
+```{r}
+gii_df <- df %>% 
+  select(iso3,country,gii_2010,gii_2019) %>%
+  mutate(gii_diff = gii_2010 - gii_2019)
+gii_df
+```
+
+join with spatial data
+
+```{r}
+world_gii <- world_boundary %>%
+  left_join(.,gii_df,by=c('country' = 'country')) %>%
+  drop_na()
+world_gii
+```
+
+### Plotting
+
+plot filled map 
+
+```{r}
+fig <- plot_ly()
+g <- list(
+  fitbounds = "locations",
+  visible = FALSE
+)
+fig <- fig %>% add_trace(
+    type="choropleth",
+    locations=world_gii$iso3,
+    z=world_gii$gii_diff,
+    colorscale="Viridis",
+    text= ~paste('</br> Country: ', world_gii$country,
+                '</br> GII 2010: ', world_gii$gii_2010,
+                 '</br> GII 2019: ', world_gii$gii_2019),
+    zmin=-0.5,
+    zmax=0.5,
+    marker=list(line=list(width=0))
+  )
+fig <- fig %>% colorbar(title = "GII Change,",y = 0.7)
+fig <- fig %>% layout(
+    title = list(text = 'Global Gender Inequality Index Change from 2010 to 2019<br>Source:<a href="https://hdr.undp.org/data-center/documentation-and-downloads">United Nations Development Programme</a>',y = 0.9), geo = g, margin=c(l=10, r=10, t=10, b=10)
+)
+
+fig
+```
+
