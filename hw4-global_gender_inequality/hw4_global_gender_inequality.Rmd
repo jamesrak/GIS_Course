@@ -78,3 +78,8 @@ fig <- fig %>% layout(
 fig
 ```
 
+Save widget
+```{r}
+library(htmlwidgets)
+saveWidget(fig, "hw4-global_gender_inequality/hw4-global_gender_inequality_map.html", selfcontained = F, libdir = "lib")
+```
