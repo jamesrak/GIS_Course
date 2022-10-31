@@ -35,7 +35,7 @@ select global gender inequality data
 ```{r}
 gii_df <- df %>% 
   select(iso3,country,gii_2010,gii_2019) %>%
-  mutate(gii_diff = gii_2010 - gii_2019)
+  mutate(gii_diff = gii_2019 - gii_2010)
 gii_df
 ```
 
@@ -63,6 +63,7 @@ fig <- fig %>% add_trace(
     locations=world_gii$iso3,
     z=world_gii$gii_diff,
     colorscale="Viridis",
+    reversescale =T,
     text= ~paste('</br> Country: ', world_gii$country,
                 '</br> GII 2010: ', world_gii$gii_2010,
                  '</br> GII 2019: ', world_gii$gii_2019),
