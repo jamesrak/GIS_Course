@@ -18,7 +18,6 @@ library(plotly)
 
 ### Prepare data
 ```{r}
-
 df <- read_csv(here('hw4-global_gender_inequality','data','HDR21-22_Composite_indices_complete_time_series.csv'))
 head(df,10)
 ```
@@ -37,6 +36,13 @@ gii_df <- df %>%
   select(iso3,country,gii_2010,gii_2019) %>%
   mutate(gii_diff = gii_2019 - gii_2010)
 gii_df
+
+# #would be better to use countrycode package
+library(countrycode)
+gii_df <- df %>%
+  select(iso3, country, gii_2010, gii_2019) %>%
+  mutate(gii_diff= gii_2019 - gii_2010) %>%
+  mutate(iso_code= countrycode(country, origin = 'country.name', destination = 'iso2c'))
 ```
 
 join with spatial data
@@ -45,6 +51,15 @@ join with spatial data
 world_gii <- world_boundary %>%
   left_join(.,gii_df,by=c('country' = 'country')) %>%
   drop_na()
+
+## world_gii only has 152 observations vs 251 when using nas are not dropped
+##if using isocode based on countrycode package
+# world_gii <- world_boundary %>%
+# clean_names() %>%
+#   left_join(.,
+#             gii_df,
+#             by = c("iso" = "iso_code"))
+
 world_gii
 ```
 
@@ -55,6 +70,11 @@ plot filled map
 ```{r}
 fig <- plot_ly()
 g <- list(
+  scope = "world",
+  showocean = TRUE,
+  oceancolor = "lightblue",
+  showland = TRUE,
+  landcolor = 'gray',
   fitbounds = "locations",
   visible = FALSE
 )
@@ -63,6 +83,7 @@ fig <- fig %>% add_trace(
     locations=world_gii$iso3,
     z=world_gii$gii_diff,
     colorscale="Viridis",
+    stroke = "grey",
     reversescale =T,
     text= ~paste('</br> Country: ', world_gii$country,
                 '</br> GII 2010: ', world_gii$gii_2010,
@@ -71,16 +92,25 @@ fig <- fig %>% add_trace(
     zmax=0.5,
     marker=list(line=list(width=0))
   )
-fig <- fig %>% colorbar(title = "GII Change,",y = 0.7)
+fig <- fig %>% colorbar(title = "GII Change",y = 0.7)
 fig <- fig %>% layout(
-    title = list(text = 'Global Gender Inequality Index Change from 2010 to 2019<br>Source:<a href="https://hdr.undp.org/data-center/documentation-and-downloads">United Nations Development Programme</a>',y = 0.9), geo = g, margin=c(l=10, r=10, t=10, b=10)
+    title = list(text = 'Global Gender Inequality Index Change from 2010 to 2019<br>Source:<a href="https://hdr.undp.org/data-center/documentation-and-downloads">United Nations Development Programme</a>',y = 0.9), 
+    geo = g, 
+    margin=c(l=10, r=10, t=10, b=10)
 )
 
 fig
+
+##The original code resullts in countries not having data (countries with na for gii) being unplotted, 
+#and there is no distinction between countries with missing data and water bodies in the plot
+#nonetheless, the map is very aesthetic.
+### I have edited the code to display oceans and grey base map for missing values.
 ```
 
 Save widget
 ```{r}
 library(htmlwidgets)
-saveWidget(fig, "hw4-global_gender_inequality/hw4-global_gender_inequality_map.html", selfcontained = F, libdir = "lib")
+saveWidget(fig, 
+           here("hw4-global_gender_inequality/hw4-global_gender_inequality_map_edited.html"), 
+           selfcontained = F, libdir = "lib")
 ```
